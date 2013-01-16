@@ -1,6 +1,30 @@
 #include "daemonizer.h"
 
-/* wrapper for the cdaemonize function */
+void _start_daemon(
+    int pipe_write,
+    char * const argv[]
+) {
+    int pid;
+    if ( -1 == (pid = fork()) ) {
+        /* FIXME: what this should be it was "return -1" 
+         * but this fucntion return void 
+         * should it stay the fix exit(-1)
+         * or it should be return? */
+        exit(-1);
+    }
+    if( pid != 0 ) {
+        /* Parent */
+        write(pipe_write, &pid, sizeof(pid));
+        close(pipe_write);
+    } else {
+        /* Child  */
+        close(pipe_write);
+        execv(argv[0], argv);
+    }
+    exit(EXIT_SUCCESS); 
+}
+
+/* wrapper for the vdaemonize function */
 int daemonize(
     int fds[3],
     ...
@@ -8,7 +32,7 @@ int daemonize(
     int ret;
     va_list args;
     va_start(args, fds);
-    ret = vdaemonize(fds, args);
+    ret = vdaemonize(fds, (char**)args);
     va_end(args);
     return ret;
 }
@@ -54,22 +78,3 @@ cleanup:
     return daemon_pid;
 }
 
-void _start_daemon(
-    int pipe_write,
-    char * const argv[]
-) {
-    int pid;
-    if ( -1 == (pid = fork()) ) {
-        return -1;
-    }
-    if( pid != 0 ) {
-        /* Parent */
-        write(pipe_write, &pid, sizeof(pid));
-        close(pipe_write);
-    } else {
-        /* Child  */
-        close(pipe_write);
-        execv(argv[0], argv);
-    }
-    exit(EXIT_SUCCESS); 
-}
