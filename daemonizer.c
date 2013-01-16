@@ -6,11 +6,7 @@ void _start_daemon(
 ) {
     int pid;
     if ( -1 == (pid = fork()) ) {
-        /* FIXME: what this should be it was "return -1" 
-         * but this fucntion return void 
-         * should it stay the fix exit(-1)
-         * or it should be return? */
-        exit(-1);
+        goto cleanup;
     }
     if( pid != 0 ) {
         /* Parent */
@@ -21,6 +17,7 @@ void _start_daemon(
         close(pipe_write);
         execv(argv[0], argv);
     }
+cleanup:
     exit(EXIT_SUCCESS); 
 }
 

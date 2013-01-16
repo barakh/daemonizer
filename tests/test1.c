@@ -16,6 +16,7 @@ void main(void)
     int write_fds[2] = {0};
     char read_buffer[100] = {0};
     int result = 0;
+    int daemon_pid = -1;
 
 
     result = pipe(read_fds);
@@ -34,8 +35,15 @@ void main(void)
     fds[1] = read_fds[1];
     fds[2] = read_fds[1];
 
-    daemonize(fds, "cat");
-    /* TODO: check if cat is a daemon right now */
+    daemon_pid = daemonize(fds, "cat");
+    if(daemon_pid == -1) {
+        printf("Daemon initialization failed\n");
+        return;
+    }
+    if(kill(daemon_pid, 0) == -1) {
+        printf("Daemon died unexpectedly\n");
+        return;
+    }
 
     result = write(write_fds[1], PATTREN, strlen(PATTREN));
     if (0 > result) {
